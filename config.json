@@ -1,0 +1,20 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 11434,
+    "api_type": "ollama"
+  },
+  "model": {
+    "name": "",
+    "path": ""
+  },
+  "parameters": {
+    "temperature": 0.7,
+    "top_k": 40,
+    "top_p": 0.9,
+    "max_tokens": 512,
+    "repeat_penalty": 1.1,
+    "context_window": 2048,
+    "seed": -1
+  }
+}
