@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <!-- ─── Header ─────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+      <span class="brand-name">LLM Dashboard</span>
+    </div>
+    <div class="header-status">
+      <span id="status-dot" class="status-dot disconnected" title="Connection status"></span>
+      <span id="status-label" class="status-label">Disconnected</span>
+      <button id="btn-connect" class="btn btn-sm btn-primary" title="Test connection">Connect</button>
+    </div>
+  </header>
+
+  <!-- ─── Main layout ─────────────────────────────────────────────── -->
+  <div class="app-layout">
+
+    <!-- ── Sidebar: Configuration ─────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <h3 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 2 12h.01M22 12a10 10 0 0 1-17.07 7.07"/></svg>
+          Server
+        </h3>
+
+        <label class="form-label">Host / IP</label>
+        <input id="cfg-host" class="form-input" type="text" value="127.0.0.1" placeholder="127.0.0.1" />
+
+        <label class="form-label">Port</label>
+        <input id="cfg-port" class="form-input" type="number" value="11434" min="1" max="65535" />
+
+        <label class="form-label">API Type</label>
+        <select id="cfg-api-type" class="form-select">
+          <option value="ollama">Ollama</option>
+          <option value="openai">OpenAI-compatible (llama.cpp / LM Studio)</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section">
+        <h3 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Model
+        </h3>
+
+        <label class="form-label">Model Name / ID</label>
+        <div class="input-row">
+          <input id="cfg-model-name" class="form-input" type="text" placeholder="e.g. llama3, mistral" />
+          <button id="btn-refresh-models" class="btn btn-icon" title="Refresh model list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.59"/></svg>
+          </button>
+        </div>
+        <div id="model-list" class="model-list hidden"></div>
+
+        <label class="form-label">Model Directory Path</label>
+        <input id="cfg-model-path" class="form-input" type="text" placeholder="/path/to/models" />
+      </div>
+
+      <div class="sidebar-section">
+        <h3 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          Parameters
+        </h3>
+
+        <label class="form-label">
+          Temperature
+          <span class="param-value" id="val-temperature">0.7</span>
+        </label>
+        <input id="cfg-temperature" class="form-range" type="range" min="0" max="2" step="0.05" value="0.7" />
+        <div class="range-hints"><span>0</span><span>1</span><span>2</span></div>
+
+        <label class="form-label">
+          Top-K
+          <span class="param-value" id="val-top-k">40</span>
+        </label>
+        <input id="cfg-top-k" class="form-range" type="range" min="1" max="200" step="1" value="40" />
+
+        <label class="form-label">
+          Top-P
+          <span class="param-value" id="val-top-p">0.9</span>
+        </label>
+        <input id="cfg-top-p" class="form-range" type="range" min="0" max="1" step="0.01" value="0.9" />
+
+        <label class="form-label">
+          Max Tokens
+          <span class="param-value" id="val-max-tokens">512</span>
+        </label>
+        <input id="cfg-max-tokens" class="form-range" type="range" min="64" max="8192" step="64" value="512" />
+
+        <label class="form-label">
+          Repeat Penalty
+          <span class="param-value" id="val-repeat-penalty">1.1</span>
+        </label>
+        <input id="cfg-repeat-penalty" class="form-range" type="range" min="1" max="2" step="0.05" value="1.1" />
+
+        <label class="form-label">
+          Context Window
+          <span class="param-value" id="val-context-window">2048</span>
+        </label>
+        <input id="cfg-context-window" class="form-range" type="range" min="512" max="32768" step="512" value="2048" />
+
+        <label class="form-label">
+          Seed <small>(−1 = random)</small>
+          <span class="param-value" id="val-seed">-1</span>
+        </label>
+        <input id="cfg-seed" class="form-input" type="number" value="-1" min="-1" />
+      </div>
+
+      <div class="sidebar-actions">
+        <button id="btn-save-config" class="btn btn-primary btn-full">Save Configuration</button>
+        <button id="btn-clear-chat" class="btn btn-ghost btn-full">Clear Chat</button>
+      </div>
+    </aside>
+
+    <!-- ── Chat panel ─────────────────────────────────────────────── -->
+    <main class="chat-panel">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-welcome">
+          <div class="welcome-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <h2>Ready to chat</h2>
+          <p>Configure your server and model in the sidebar, then start a conversation below.</p>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-wrapper">
+          <textarea
+            id="chat-input"
+            class="chat-textarea"
+            placeholder="Type a message… (Shift+Enter for new line, Enter to send)"
+            rows="1"
+          ></textarea>
+          <button id="btn-send" class="btn btn-send" title="Send message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <p class="chat-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ─── Toast notifications ─────────────────────────────────────── -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ─── Toggle sidebar button (mobile) ─────────────────────────── -->
+  <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" title="Toggle settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="6"  x2="21" y2="6"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
